@@ -144,6 +144,16 @@ func (t *MyTransition) Draw(screen *ebiten.Image) {
 
 ```
 
+## Contribution
+
+Contributions are welcome! If you find a bug or have a feature request, please open an issue on GitHub. If you would like to contribute code, please fork the repository and submit a pull request.
+
+Before submitting a pull request, please make sure to run the tests:
+
+```
+go test ./...
+```
+
 ## License
 
 Stagehand is released under the [MIT License](https://github.com/example/stagehand/blob/master/LICENSE).
