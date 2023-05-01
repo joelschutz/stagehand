@@ -1,0 +1,32 @@
+
+name: Go Tests
+
+on:
+    push:
+        branches: master
+    pull_request:
+        branches: master
+    workflow_dispatch:
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Setup Go
+              uses: actions/setup-go@v4
+              with:
+                go-version: 1.20.x
+                cache: true
+            - name: Install dependencies
+              run: |
+                    sudo apt-get update
+                    sudo apt install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev xvfb
+            - name: Run Tests
+              env:
+                    DISPLAY: ":99.0"
+              run: |
+                    xvfb-run --auto-servernum  go test -v -coverprofile=coverage.out -covermode=atomic ./...
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v3
