@@ -1,13 +1,10 @@
 # Stagehand
 
-Here are the Markdown snippets for the badges you requested:
-
 ![Codecov](https://img.shields.io/codecov/c/gh/joelschutz/stagehand?token=3BD1FTRKUC)
 [![issues](https://img.shields.io/github/issues/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/issues)
 [![license](https://img.shields.io/github/license/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/blob/main/LICENSE)
 
 Stagehand is a scene manager library for [Ebiten](https://ebiten.org) that makes it easy to manage game scenes and state. With Stagehand, you can quickly create and transition between scenes, allowing you to focus on the content and gameplay of your game.
-
 
 
 ## Installation
