@@ -4,7 +4,7 @@
 [![issues](https://img.shields.io/github/issues/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/issues)
 [![license](https://img.shields.io/github/license/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/blob/main/LICENSE)
 
-Stagehand is a scene manager library for [Ebiten](https://ebiten.org) that makes it easy to manage game scenes and state. With Stagehand, you can quickly create and transition between scenes, allowing you to focus on the content and gameplay of your game.
+Stagehand is a scene manager library for [Ebitengine](https://ebitengine.org) that makes it easy to manage game scenes and state. With Stagehand, you can quickly create and transition between scenes, allowing you to focus on the content and gameplay of your game.
 
 
 ## Installation
@@ -17,7 +17,7 @@ import "github.com/example/stagehand"
 
 ## Features
 
-- Lightweight and easy-to-use scene management for Ebiten
+- Lightweight and easy-to-use scene management for Ebitengine
 - Simple and flexible API for creating and switching between scenes
 - Managed type-safe states with the power of generics
 - Built-in support for transition effects between scenes
