@@ -1,6 +1,8 @@
 package stagehand
 
 import (
+	"time"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -205,4 +207,91 @@ func (t *SlideTransition[T]) Draw(screen *ebiten.Image) {
 	screen.DrawImage(toImg, toOp)
 	screen.DrawImage(fromImg, fromOp)
 	t.frameUpdated = false
+}
+
+// Timed Variants of the transition
+
+func NewTicksTimedFadeTransition[T any](duration time.Duration) *FadeTransition[T] {
+	return NewFadeTransition[T](float32(DurationToFactor(float64(ebiten.TPS()), duration)))
+}
+
+type TimedFadeTransition[T any] struct {
+	FadeTransition[T]
+	initialTime time.Time
+	duration    time.Duration
+}
+
+func NewDurationTimedFadeTransition[T any](duration time.Duration) *TimedFadeTransition[T] {
+	return &TimedFadeTransition[T]{
+		duration:       duration,
+		FadeTransition: *NewFadeTransition[T](0.),
+	}
+}
+
+func (t *TimedFadeTransition[T]) Start(fromScene, toScene Scene[T]) {
+	t.FadeTransition.Start(fromScene, toScene)
+	t.initialTime = time.Now()
+}
+
+func (t *TimedFadeTransition[T]) Update() error {
+	if !t.frameUpdated {
+		// Update the alpha value based on the current state of the transition
+		if t.isFadingIn {
+			t.alpha = float32(CalculateProgress(t.initialTime, t.duration/2))
+			if t.alpha >= 1.0 {
+				t.alpha = 1.0
+				t.isFadingIn = false
+			}
+		} else {
+			t.alpha = 1 - float32(CalculateProgress(t.initialTime.Add(t.duration/2), t.duration/2))
+			if t.alpha <= 0.0 {
+				t.alpha = 0.0
+				t.End()
+			}
+		}
+		t.frameUpdated = true
+	}
+
+	// Update the scenes
+	return t.BaseTransition.Update()
+
+}
+
+func NewTicksTimedSlideTransition[T any](direction SlideDirection, duration time.Duration) *SlideTransition[T] {
+	return NewSlideTransition[T](direction, DurationToFactor(float64(ebiten.TPS()), duration))
+}
+
+type TimedSlideTransition[T any] struct {
+	SlideTransition[T]
+	initialTime time.Time
+	duration    time.Duration
+}
+
+func NewDurationTimedSlideTransition[T any](direction SlideDirection, duration time.Duration) *TimedSlideTransition[T] {
+	return &TimedSlideTransition[T]{
+		duration:        duration,
+		SlideTransition: *NewSlideTransition[T](direction, 0.),
+	}
+}
+
+func (t *TimedSlideTransition[T]) Start(fromScene, toScene Scene[T]) {
+	t.SlideTransition.Start(fromScene, toScene)
+	t.initialTime = time.Now()
+}
+
+func (t *TimedSlideTransition[T]) Update() error {
+	if !t.frameUpdated {
+		// Update the offset value based on the current state of the transition
+		if t.offset >= 1.0 {
+			t.offset = 1.0
+			t.End()
+		} else {
+			t.offset = CalculateProgress(t.initialTime, t.duration)
+		}
+		t.frameUpdated = true
+	}
+
+	// Update the scenes
+	return t.BaseTransition.Update()
+
 }

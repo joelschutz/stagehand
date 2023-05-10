@@ -2,6 +2,7 @@ package stagehand
 
 import (
 	"image"
+	"time"
 
 	ebiten "github.com/hajimehoshi/ebiten/v2"
 )
@@ -23,4 +24,14 @@ func PreDraw[T any](bounds image.Rectangle, fromScene, toScene Scene[T]) (*ebite
 	toScene.Draw(toImg)
 
 	return toImg, fromImg
+}
+
+// Converts a frequency(cycle/second) to a factor(change/cycle) for a given duration
+func DurationToFactor(frequency float64, duration time.Duration) float64 {
+	return (1 / frequency) / duration.Seconds()
+}
+
+// Calculates the fraction of the duration that has passed since the initial time
+func CalculateProgress(initialTime time.Time, duration time.Duration) float64 {
+	return float64(time.Since(initialTime)) / float64(duration)
 }
