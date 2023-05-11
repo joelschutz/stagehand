@@ -2,10 +2,20 @@ package stagehand
 
 import (
 	"testing"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 )
+
+type MockClock struct {
+	currentTime time.Time
+}
+
+func (m *MockClock) Now() time.Time                  { return m.currentTime }
+func (m *MockClock) Sleep(d time.Duration)           { m.currentTime = m.currentTime.Add(d) }
+func (m *MockClock) Since(t time.Time) time.Duration { return m.currentTime.Sub(t) }
+func (m *MockClock) Until(t time.Time) time.Duration { return t.Sub(m.currentTime) }
 
 type baseTransitionImplementation struct {
 	BaseTransition[int]
@@ -237,4 +247,123 @@ func TestSlideTransition_Draw(t *testing.T) {
 		trans.Draw(ebiten.NewImage(100, 100))
 		assert.False(t, trans.frameUpdated)
 	}
+}
+
+func TestTimedFadeTransition_Update(t *testing.T) {
+	now := time.Now()
+	Clock = &MockClock{currentTime: now}
+	from := &MockScene{}
+	to := &MockScene{}
+	trans := NewDurationTimedFadeTransition[int](time.Second)
+	trans.Start(from, to)
+	sm := NewSceneManager[int](trans, 0)
+
+	// Should not update if no time passed
+	err := sm.Update()
+	assert.NoError(t, err)
+	assert.Equal(t, float32(.0), trans.alpha)
+	assert.True(t, trans.isFadingIn)
+
+	trans.frameUpdated = false
+
+	Clock.Sleep(time.Second / 4)
+	err = sm.Update()
+	assert.NoError(t, err)
+	assert.Equal(t, float32(.5), trans.alpha)
+	assert.True(t, trans.isFadingIn)
+
+	trans.frameUpdated = false
+
+	Clock.Sleep(time.Second / 4)
+	err = sm.Update()
+	assert.NoError(t, err)
+	assert.Equal(t, float32(1.0), trans.alpha)
+	assert.False(t, trans.isFadingIn)
+
+	trans.frameUpdated = false
+
+	Clock.Sleep(time.Second / 4)
+	err = sm.Update()
+	assert.NoError(t, err)
+	assert.Equal(t, float32(.5), trans.alpha)
+	assert.False(t, trans.isFadingIn)
+
+	trans.frameUpdated = false
+
+	Clock.Sleep(time.Second / 4)
+	err = sm.Update()
+	assert.NoError(t, err)
+	assert.Equal(t, float32(0), trans.alpha)
+	assert.Equal(t, to, sm.current)
+
+}
+
+func TestTimedFadeTransition_Start(t *testing.T) {
+	now := time.Now()
+	Clock = &MockClock{currentTime: now}
+	from := &MockScene{}
+	to := &MockScene{}
+	trans := NewDurationTimedFadeTransition[int](time.Second)
+	trans.Start(from, to)
+
+	assert.Equal(t, from, trans.fromScene)
+	assert.Equal(t, to, trans.toScene)
+	assert.Equal(t, now, trans.initialTime)
+	assert.True(t, trans.isFadingIn)
+}
+
+func TestTimedSlideTransition_Update(t *testing.T) {
+	from := &MockScene{}
+	to := &MockScene{}
+	variations := []SlideDirection{
+		LeftToRight, RightToLeft, TopToBottom, BottomToTop,
+	}
+
+	for _, direction := range variations {
+		Clock = &MockClock{currentTime: time.Now()}
+		trans := NewDurationTimedSlideTransition[int](direction, time.Second)
+		trans.Start(from, to)
+		sm := NewSceneManager[int](trans, 0)
+
+		// Should not update if no time passed
+		err := sm.Update()
+		assert.NoError(t, err)
+		assert.Equal(t, .0, trans.offset)
+
+		trans.frameUpdated = false
+
+		Clock.Sleep(time.Second / 2)
+		err = sm.Update()
+		assert.NoError(t, err)
+		assert.Equal(t, .5, trans.offset)
+
+		trans.frameUpdated = false
+
+		Clock.Sleep(time.Second / 2)
+		err = sm.Update()
+		assert.NoError(t, err)
+		assert.Equal(t, 1.0, trans.offset)
+
+		trans.frameUpdated = false
+
+		Clock.Sleep(time.Second / 2)
+		err = sm.Update()
+		assert.NoError(t, err)
+		assert.Equal(t, 1.0, trans.offset)
+		assert.Equal(t, to, sm.current)
+	}
+}
+
+func TestTimedSlideTransition_Start(t *testing.T) {
+	now := time.Now()
+	Clock = &MockClock{currentTime: now}
+	from := &MockScene{}
+	to := &MockScene{}
+	trans := NewDurationTimedSlideTransition[int](TopToBottom, time.Second)
+	trans.Start(from, to)
+
+	assert.Equal(t, from, trans.fromScene)
+	assert.Equal(t, to, trans.toScene)
+	assert.Equal(t, now, trans.initialTime)
+	assert.Equal(t, TopToBottom, trans.direction)
 }

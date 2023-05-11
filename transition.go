@@ -230,7 +230,7 @@ func NewDurationTimedFadeTransition[T any](duration time.Duration) *TimedFadeTra
 
 func (t *TimedFadeTransition[T]) Start(fromScene, toScene Scene[T]) {
 	t.FadeTransition.Start(fromScene, toScene)
-	t.initialTime = time.Now()
+	t.initialTime = Clock.Now()
 }
 
 func (t *TimedFadeTransition[T]) Update() error {
@@ -276,7 +276,7 @@ func NewDurationTimedSlideTransition[T any](direction SlideDirection, duration t
 
 func (t *TimedSlideTransition[T]) Start(fromScene, toScene Scene[T]) {
 	t.SlideTransition.Start(fromScene, toScene)
-	t.initialTime = time.Now()
+	t.initialTime = Clock.Now()
 }
 
 func (t *TimedSlideTransition[T]) Update() error {
