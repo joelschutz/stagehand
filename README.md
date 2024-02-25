@@ -12,7 +12,7 @@ Stagehand is a scene manager library for [Ebitengine](https://ebitengine.org) th
 To use Stagehand, simply import it into your project:
 
 ```
-import "github.com/example/stagehand"
+import "github.com/joelschutz/stagehand"
 ```
 
 ## Features
