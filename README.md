@@ -28,7 +28,7 @@ import "github.com/example/stagehand"
 To use Stagehand, you first need to create a struct that implements the `Scene` interface:
 
 ```go
-type State struct {
+type MyState struct {
     // your state data
 }
 
@@ -44,11 +44,11 @@ func (s *MyScene) Draw(screen *ebiten.Image) {
     // your draw code
 }
 
-func (s *MyScene) Load(state State ,manager *stagehand.SceneManager) {
+func (s *MyScene) Load(state MyState ,manager *stagehand.SceneManager) {
     // your load code
 }
 
-func (s *MyScene) Unload() State {
+func (s *MyScene) Unload() MyState {
     // your unload code
 }
 ```
@@ -60,7 +60,7 @@ func main() {
     // ...
     scene1 := &MyScene{}
     state := MyState{}
-    manager := stagehand.NewSceneManager[State](scene1, state)
+    manager := stagehand.NewSceneManager[MyState](scene1, state)
 
     if err := ebiten.RunGame(sm); err != nil {
 		log.Fatal(err)
