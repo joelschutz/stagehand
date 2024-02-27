@@ -7,7 +7,7 @@ import (
 )
 
 type SceneTransition[T any] interface {
-	Scene[T]
+	ProtoScene[T]
 	Start(fromScene, toScene Scene[T])
 	End()
 }
@@ -47,20 +47,29 @@ func (t *BaseTransition[T]) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return MaxInt(sw, tw), MaxInt(sh, th)
 }
 
-// Loads the next scene
-func (t *BaseTransition[T]) Load(state T, manager *SceneManager[T]) {
-	t.sm = manager
-	t.toScene.Load(state, manager)
+func (s *SceneManager[T]) returnFromTransition(scene, orgin Scene[T]) {
+	if c, ok := scene.(TransitionAwareScene[T]); ok {
+		c.PostTransition(orgin.Unload(), orgin)
+	} else {
+		scene.Load(orgin.Unload(), s)
+	}
+	s.current = scene
 }
 
-// Unloads the last scene
-func (t *BaseTransition[T]) Unload() T {
-	return t.fromScene.Unload()
+func (s *SceneManager[T]) SwitchWithTransition(scene Scene[T], transition SceneTransition[T]) {
+	sc := s.current.(Scene[T])
+	transition.Start(sc, scene)
+	if c, ok := sc.(TransitionAwareScene[T]); ok {
+		scene.Load(c.PreTransition(scene), s)
+	} else {
+		scene.Load(sc.Unload(), s)
+	}
+	s.current = transition
 }
 
 // Ends transition to the next scene
 func (t *BaseTransition[T]) End() {
-	t.sm.SwitchTo(t.toScene)
+	t.sm.returnFromTransition(t.toScene, t.fromScene)
 }
 
 type FadeTransition[T any] struct {
