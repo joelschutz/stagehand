@@ -147,6 +147,22 @@ func (t *MyTransition) Draw(screen *ebiten.Image) {
 
 ```
 
+### Transition Awareness
+
+When a scene is transitioned, the `Load` and `Unload` methods are called twice for the destination and original scenes respectively. Once at the start and again at the end of the transition. This behavior can be changed for additional control by implementing the `TranditionAwareScene` interface.
+
+```go
+func (s *MyScene) PreTransition(state T, origin stagehand.Scene[T]) {
+    // code to run before load scene
+}
+
+func (s *MyScene) PostTransition(origin stagehand.Scene[T]) {
+    // code to run after unload scene
+}
+```
+
+With this you can insure that those methods are only called once on transitions and it signals that the scene is being unloaded or has fully transitioned.
+
 ## Contribution
 
 Contributions are welcome! If you find a bug or have a feature request, please open an issue on GitHub. If you would like to contribute code, please fork the repository and submit a pull request.
