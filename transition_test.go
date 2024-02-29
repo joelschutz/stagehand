@@ -1,6 +1,7 @@
 package stagehand
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -49,37 +50,14 @@ func TestBaseTransition_Layout(t *testing.T) {
 	assert.True(t, to.layoutCalled)
 }
 
-func TestBaseTransition_Load(t *testing.T) {
-	from := &MockScene{}
-	to := &MockScene{}
-	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-	trans.Load(42, &SceneManager[int]{})
-
-	assert.True(t, to.loadCalled)
-	assert.False(t, from.loadCalled)
-
-}
-
-func TestBaseTransition_Unload(t *testing.T) {
-	from := &MockScene{}
-	to := &MockScene{}
-	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-
-	trans.Unload()
-	assert.True(t, from.unloadCalled)
-	assert.False(t, to.unloadCalled)
-}
-
 func TestBaseTransition_End(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 
-	trans.End()
+	fmt.Println(sm.current.(Scene[int]), to)
 	assert.Equal(t, to, sm.current)
 }
 
@@ -114,8 +92,8 @@ func TestFadeTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewFadeTransition[int](.5)
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 
 	err := sm.Update()
 	assert.NoError(t, err)
@@ -198,8 +176,8 @@ func TestSlideTransition_Update(t *testing.T) {
 
 	for _, direction := range variations {
 		trans := NewSlideTransition[int](direction, .5)
-		trans.Start(from, to)
-		sm := NewSceneManager[int](trans, 0)
+		sm := NewSceneManager[int](from, 0)
+		sm.SwitchWithTransition(to, trans)
 
 		err := sm.Update()
 		assert.NoError(t, err)
@@ -255,8 +233,8 @@ func TestTimedFadeTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewDurationTimedFadeTransition[int](time.Second)
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 
 	// Should not update if no time passed
 	err := sm.Update()
@@ -322,8 +300,8 @@ func TestTimedSlideTransition_Update(t *testing.T) {
 	for _, direction := range variations {
 		Clock = &MockClock{currentTime: time.Now()}
 		trans := NewDurationTimedSlideTransition[int](direction, time.Second)
-		trans.Start(from, to)
-		sm := NewSceneManager[int](trans, 0)
+		sm := NewSceneManager[int](from, 0)
+		sm.SwitchWithTransition(to, trans)
 
 		// Should not update if no time passed
 		err := sm.Update()

@@ -113,10 +113,12 @@ func TestSceneManager_Layout(t *testing.T) {
 }
 
 func TestSceneManager_Load_Unload(t *testing.T) {
-	sm := NewSceneManager[int](&MockScene{}, 42)
-	mockScene := &MockScene{}
-	sm.SwitchTo(mockScene)
-	unloaded := sm.current.Unload()
-	assert.True(t, mockScene.unloadCalled)
-	assert.Equal(t, 42, unloaded)
+	from := &MockScene{}
+	to := &MockScene{}
+	sm := NewSceneManager[int](from, 42)
+	sm.SwitchTo(to)
+
+	assert.True(t, to.loadCalled)
+	assert.True(t, from.unloadCalled)
+	assert.Equal(t, 42, sm.current.(Scene[int]).Unload())
 }
