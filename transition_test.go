@@ -24,6 +24,21 @@ type baseTransitionImplementation struct {
 
 func (b *baseTransitionImplementation) Draw(screen *ebiten.Image) {}
 
+type MockTransitionAwareScene struct {
+	MockScene
+	preTransitionCalled  bool
+	postTransitionCalled bool
+}
+
+func (m *MockTransitionAwareScene) PreTransition(fromScene Scene[int]) int {
+	m.preTransitionCalled = true
+	return 0
+}
+
+func (m *MockTransitionAwareScene) PostTransition(state int, toScene Scene[int]) {
+	m.postTransitionCalled = true
+}
+
 func TestBaseTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
@@ -70,6 +85,23 @@ func TestBaseTransition_Start(t *testing.T) {
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)
+}
+
+func TestBaseTransition_Awareness(t *testing.T) {
+	from := &MockTransitionAwareScene{}
+	to := &MockTransitionAwareScene{}
+	sm := NewSceneManager[int](from, 0)
+	trans := &baseTransitionImplementation{}
+	sm.SwitchWithTransition(to, trans)
+
+	assert.True(t, from.preTransitionCalled)
+	assert.True(t, to.loadCalled)
+	assert.False(t, from.unloadCalled)
+	assert.False(t, to.postTransitionCalled)
+
+	trans.End()
+	assert.True(t, from.unloadCalled)
+	assert.True(t, to.postTransitionCalled)
 }
 
 func TestFadeTransition_UpdateOncePerFrame(t *testing.T) {
