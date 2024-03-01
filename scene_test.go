@@ -44,12 +44,11 @@ type MockTransition[T any] struct {
 	fromScene   Scene[T]
 	toScene     Scene[T]
 	startCalled bool
-	state       T
 }
 
 func NewMockTransition[T any]() *MockTransition[T] { return &MockTransition[T]{} }
 
-func (t *MockTransition[T]) Start(fromScene, toScene Scene[T]) {
+func (t *MockTransition[T]) Start(fromScene, toScene Scene[T], sm *SceneManager[T]) {
 	t.fromScene = fromScene
 	t.toScene = toScene
 	t.startCalled = true
@@ -60,10 +59,6 @@ func (t *MockTransition[T]) End() {}
 func (t *MockTransition[T]) Update() error { return nil }
 
 func (t *MockTransition[T]) Draw(screen *ebiten.Image) {}
-
-func (t *MockTransition[T]) Load(state T, sm *SceneManager[T]) { t.state = state }
-
-func (t *MockTransition[T]) Unload() T { return t.state }
 
 func (t *MockTransition[T]) Layout(w, h int) (int, int) { return w, h }
 
