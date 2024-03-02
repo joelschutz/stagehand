@@ -72,9 +72,9 @@ func main() {
 
 We provide some example code so you can start fast:
 
-- [Simple Example](https://github.com/stagehand/blob/master/examples/simple/main.go)
-- [Timed Transition Example](https://github.com/stagehand/blob/master/examples/timed/main.go)
-- [Transition Awareness Example](https://github.com/stagehand/blob/master/examples/aware/main.go)
+- [Simple Example](https://github.com/joelschutz/stagehand/blob/master/examples/simple/main.go)
+- [Timed Transition Example](https://github.com/joelschutz/stagehand/blob/master/examples/timed/main.go)
+- [Transition Awareness Example](https://github.com/joelschutz/stagehand/blob/master/examples/aware/main.go)
 
 ## Transitions
 
@@ -195,4 +195,4 @@ go test ./...
 
 ## License
 
-Stagehand is released under the [MIT License](https://github.com/stagehand/blob/master/LICENSE).
+Stagehand is released under the [MIT License](https://github.com/joelschutz/stagehand/blob/master/LICENSE).
