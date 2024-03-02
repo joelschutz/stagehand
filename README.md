@@ -68,6 +68,14 @@ func main() {
 }
 ```
 
+### Examples
+
+We provide some example code so you can start fast:
+
+- [Simple Example](https://github.com/stagehand/blob/master/examples/simple/main.go)
+- [Timed Transition Example](https://github.com/stagehand/blob/master/examples/timed/main.go)
+- [Transition Awareness Example](https://github.com/stagehand/blob/master/examples/aware/main.go)
+
 ## Transitions
 
 You can switch scenes by calling `SwitchTo` method on the `SceneManager` giving the scene instance you wanna switch to.
@@ -98,7 +106,7 @@ func (s *MyScene) Update() error {
 }
 ```
 
-In this example, the `FadeTransition` will fade 5% every frame.
+In this example, the `FadeTransition` will fade 5% every frame. There is also the option for a timed transition using `NewTicksTimedFadeTransition`(for a ticks based timming) or `NewDurationTimedFadeTransition`(for a real-time based timming).
 
 ### Slide Transition
 
@@ -114,7 +122,7 @@ func (s *MyScene) Update() error {
 }
 ```
 
-In this example, the `SlideTransition` will slide in the new scene from the left 5% every frame.
+In this example, the `SlideTransition` will slide in the new scene from the left 5% every frame. There is also the option for a timed transition using `NewTicksTimedSlideTransition`(for a ticks based timming) or `NewDurationTimedSlideTransition`(for a real-time based timming).
 
 ### Custom Transitions
 
@@ -126,9 +134,9 @@ type MyTransition struct {
 	progress float64 // An example factor
 }
 
-func (t *MyTransition) Start(from, to stagehand.Scene[T]) {
+func (t *MyTransition) Start(from, to stagehand.Scene[MyState], sm *SceneManager[MyState]) {
     // Start the transition from the "from" scene to the "to" scene here
-    t.BaseTransition.Start(fromScene, toScene)
+    t.BaseTransition.Start(fromScene, toScene, sm)
     t.progress = 0
 }
 
@@ -149,19 +157,31 @@ func (t *MyTransition) Draw(screen *ebiten.Image) {
 
 ### Transition Awareness
 
-When a scene is transitioned, the `Load` and `Unload` methods are called twice for the destination and original scenes respectively. Once at the start and again at the end of the transition. This behavior can be changed for additional control by implementing the `TranditionAwareScene` interface.
+When a scene is transitioned, the `Load` and `Unload` methods are called **twice** for the destination and original scenes respectively. Once at the start and again at the end of the transition. This behavior can be changed for additional control by implementing the `TransitionAwareScene` interface.
 
 ```go
-func (s *MyScene) PreTransition(state T, origin stagehand.Scene[T]) {
-    // code to run before load scene
+func (s *MyScene) PreTransition(destination Scene[MyState]) MyState  {
+    // Runs before new scene is loaded
 }
 
-func (s *MyScene) PostTransition(origin stagehand.Scene[T]) {
-    // code to run after unload scene
+func (s *MyScene) PostTransition(lastState MyState, original Scene[MyState]) {
+    // Runs when old scene is unloaded
 }
 ```
 
-With this you can insure that those methods are only called once on transitions and it signals that the scene is being unloaded or has fully transitioned.
+With this you can insure that those methods are only called once on transitions and can control your scenes at each point of the transition. The execution order will be:
+
+```shell
+PreTransition Called on old scene
+Load Called on new scene
+Updated old scene
+Updated new scene
+...
+Updated old scene
+Updated new scene
+Unload Called on old scene
+PostTransition Called on new scene
+```
 
 ## Contribution
 
@@ -175,4 +195,4 @@ go test ./...
 
 ## License
 
-Stagehand is released under the [MIT License](https://github.com/example/stagehand/blob/master/LICENSE).
+Stagehand is released under the [MIT License](https://github.com/stagehand/blob/master/LICENSE).

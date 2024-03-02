@@ -15,8 +15,8 @@ type Scene[T any] interface {
 }
 type TransitionAwareScene[T any] interface {
 	Scene[T]
-	PreTransition(Scene[T]) T   // Runs before Load, must return last state
-	PostTransition(T, Scene[T]) // Runs when scene is fully loaded
+	PreTransition(Scene[T]) T   // Runs before new scene is loaded, must return last state
+	PostTransition(T, Scene[T]) // Runs when old scene is unloaded
 }
 
 type SceneManager[T any] struct {
