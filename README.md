@@ -63,8 +63,8 @@ func main() {
     manager := stagehand.NewSceneManager[MyState](scene1, state)
 
     if err := ebiten.RunGame(sm); err != nil {
-		log.Fatal(err)
-	}
+        log.Fatal(err)
+    }
 }
 ```
 
@@ -131,7 +131,7 @@ You can also define your own transition, simply implement the `SceneTransition` 
 ```go
 type MyTransition struct {
     stagehand.BaseTransition
-	progress float64 // An example factor
+    progress float64 // An example factor
 }
 
 func (t *MyTransition) Start(from, to stagehand.Scene[MyState], sm *SceneManager[MyState]) {
@@ -141,14 +141,14 @@ func (t *MyTransition) Start(from, to stagehand.Scene[MyState], sm *SceneManager
 }
 
 func (t *MyTransition) Update() error {
-	// Update the progress of the transition
+    // Update the progress of the transition
     t.progress += 0.01
-	return t.BaseTransition.Update()
+    return t.BaseTransition.Update()
 }
 
 func (t *MyTransition) Draw(screen *ebiten.Image) {
-	// Optionally you can use a helper function to render each scene frame
-	toImg, fromImg := stagehand.PreDraw(screen.Bounds(), t.fromScene, t.toScene)
+    // Optionally you can use a helper function to render each scene frame
+    toImg, fromImg := stagehand.PreDraw(screen.Bounds(), t.fromScene, t.toScene)
 
     // Draw transition effect here
 }
