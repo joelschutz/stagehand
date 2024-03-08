@@ -42,12 +42,12 @@ func (s *BaseScene) Unload() State {
 	return s.count
 }
 
-func (s *BaseScene) PreTransition(toScene stagehand.Scene[State]) State {
+func (s *BaseScene) PreTransition(toScene stagehand.Scene[State, *stagehand.SceneManager[State]]) State {
 	s.count.OnTransition = true
 	return s.count
 }
 
-func (s *BaseScene) PostTransition(state State, fromScene stagehand.Scene[State]) {
+func (s *BaseScene) PostTransition(state State, fromScene stagehand.Scene[State, *stagehand.SceneManager[State]]) {
 	s.count.OnTransition = false
 }
 
@@ -60,7 +60,7 @@ func (s *FirstScene) Update() error {
 		s.count.Count++
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&SecondScene{}, stagehand.NewSlideTransition[State](stagehand.TopToBottom, .05))
+		s.sm.SwitchWithTransition(&SecondScene{}, stagehand.NewSlideTransition[State, *stagehand.SceneManager[State]](stagehand.TopToBottom, .05))
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func (s *SecondScene) Update() error {
 		s.count.Count--
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State](stagehand.BottomToTop, .05))
+		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State, *stagehand.SceneManager[State]](stagehand.BottomToTop, .05))
 	}
 	return nil
 }

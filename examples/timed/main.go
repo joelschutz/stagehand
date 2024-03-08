@@ -49,7 +49,7 @@ func (s *FirstScene) Update() error {
 		s.count++
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&SecondScene{}, stagehand.NewTicksTimedSlideTransition[State](stagehand.LeftToRight, time.Second*time.Duration(s.count)))
+		s.sm.SwitchWithTransition(&SecondScene{}, stagehand.NewTicksTimedSlideTransition[State, *stagehand.SceneManager[State]](stagehand.LeftToRight, time.Second*time.Duration(s.count)))
 	}
 	return nil
 }
@@ -68,7 +68,7 @@ func (s *SecondScene) Update() error {
 		s.count--
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewDurationTimedSlideTransition[State](stagehand.RightToLeft, time.Second*time.Duration(s.count)))
+		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewDurationTimedSlideTransition[State, *stagehand.SceneManager[State]](stagehand.RightToLeft, time.Second*time.Duration(s.count)))
 	}
 	return nil
 }
