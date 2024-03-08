@@ -36,7 +36,7 @@ func TestPreDraw(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 
-	toImg, fromImg := PreDraw[int](image.Rect(0, 0, 10, 10), from, to)
+	toImg, fromImg := PreDraw[int, *SceneManager[int]](image.Rect(0, 0, 10, 10), from, to)
 
 	assert.True(t, from.drawCalled)
 	assert.True(t, to.drawCalled)

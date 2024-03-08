@@ -40,27 +40,29 @@ func (m *MockScene) Layout(w, h int) (int, int) {
 	return w, h
 }
 
-type MockTransition[T any] struct {
-	fromScene   Scene[T]
-	toScene     Scene[T]
+type MockTransition[T any, M SceneController[T]] struct {
+	fromScene   Scene[T, M]
+	toScene     Scene[T, M]
 	startCalled bool
 }
 
-func NewMockTransition[T any]() *MockTransition[T] { return &MockTransition[T]{} }
+func NewMockTransition[T any, M SceneController[T]]() *MockTransition[T, M] {
+	return &MockTransition[T, M]{}
+}
 
-func (t *MockTransition[T]) Start(fromScene, toScene Scene[T], sm *SceneManager[T]) {
+func (t *MockTransition[T, M]) Start(fromScene, toScene Scene[T, M], sm *SceneManager[T]) {
 	t.fromScene = fromScene
 	t.toScene = toScene
 	t.startCalled = true
 }
 
-func (t *MockTransition[T]) End() {}
+func (t *MockTransition[T, M]) End() {}
 
-func (t *MockTransition[T]) Update() error { return nil }
+func (t *MockTransition[T, M]) Update() error { return nil }
 
-func (t *MockTransition[T]) Draw(screen *ebiten.Image) {}
+func (t *MockTransition[T, M]) Draw(screen *ebiten.Image) {}
 
-func (t *MockTransition[T]) Layout(w, h int) (int, int) { return w, h }
+func (t *MockTransition[T, M]) Layout(w, h int) (int, int) { return w, h }
 
 func TestSceneManager_SwitchTo(t *testing.T) {
 	sm := NewSceneManager[int](&MockScene{}, 0)
@@ -73,7 +75,7 @@ func TestSceneManager_SwitchTo(t *testing.T) {
 func TestSceneManager_SwitchWithTransition(t *testing.T) {
 	sm := NewSceneManager[int](&MockScene{}, 0)
 	mockScene := &MockScene{}
-	mockTransition := &MockTransition[int]{}
+	mockTransition := &MockTransition[int, *SceneManager[int]]{}
 	sm.SwitchWithTransition(mockScene, mockTransition)
 	assert.True(t, mockTransition.startCalled)
 	assert.True(t, sm.current == mockTransition)
@@ -115,5 +117,5 @@ func TestSceneManager_Load_Unload(t *testing.T) {
 
 	assert.True(t, to.loadCalled)
 	assert.True(t, from.unloadCalled)
-	assert.Equal(t, 42, sm.current.(Scene[int]).Unload())
+	assert.Equal(t, 42, sm.current.(Scene[int, *SceneManager[int]]).Unload())
 }
