@@ -33,7 +33,7 @@ func MaxInt(a, b int) int {
 }
 
 // Pre-draw scenes
-func PreDraw[T any](bounds image.Rectangle, fromScene, toScene Scene[T]) (*ebiten.Image, *ebiten.Image) {
+func PreDraw[T any, M SceneController[T]](bounds image.Rectangle, fromScene, toScene Scene[T, M]) (*ebiten.Image, *ebiten.Image) {
 	fromImg := ebiten.NewImage(bounds.Dx(), bounds.Dy())
 	fromScene.Draw(fromImg)
 
