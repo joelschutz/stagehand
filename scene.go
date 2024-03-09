@@ -9,17 +9,18 @@ type ProtoScene[T any] interface {
 }
 
 type SceneController[T any] interface {
-	*SceneManager[T] | *SceneDirector[T]
+	// *SceneManager[T] | *SceneDirector[T]
+	ReturnFromTransition(scene, orgin Scene[T])
 }
 
-type Scene[T any, M SceneController[T]] interface {
+type Scene[T any] interface {
 	ProtoScene[T]
-	Load(T, M) // Runs when scene is first started, must keep state and SceneManager
-	Unload() T // Runs when scene is discarted, must return last state
+	Load(T, SceneController[T]) // Runs when scene is first started, must keep state and SceneManager
+	Unload() T                  // Runs when scene is discarted, must return last state
 }
 
-type TransitionAwareScene[T any, M SceneController[T]] interface {
-	Scene[T, M]
-	PreTransition(Scene[T, M]) T   // Runs before new scene is loaded, must return last state
-	PostTransition(T, Scene[T, M]) // Runs when old scene is unloaded
+type TransitionAwareScene[T any] interface {
+	Scene[T]
+	PreTransition(Scene[T]) T   // Runs before new scene is loaded, must return last state
+	PostTransition(T, Scene[T]) // Runs when old scene is unloaded
 }

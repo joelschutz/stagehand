@@ -6,26 +6,26 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type SceneTransition[T any, M SceneController[T]] interface {
+type SceneTransition[T any] interface {
 	ProtoScene[T]
-	Start(fromScene, toScene Scene[T, M], sm *SceneManager[T])
+	Start(fromScene, toScene Scene[T], sm SceneController[T])
 	End()
 }
 
-type BaseTransition[T any, M SceneController[T]] struct {
-	fromScene Scene[T, M]
-	toScene   Scene[T, M]
-	sm        *SceneManager[T]
+type BaseTransition[T any] struct {
+	fromScene Scene[T]
+	toScene   Scene[T]
+	sm        SceneController[T]
 }
 
-func (t *BaseTransition[T, M]) Start(fromScene, toScene Scene[T, M], sm *SceneManager[T]) {
+func (t *BaseTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.fromScene = fromScene
 	t.toScene = toScene
 	t.sm = sm
 }
 
 // Update updates the transition state
-func (t *BaseTransition[T, M]) Update() error {
+func (t *BaseTransition[T]) Update() error {
 	// Update the scenes
 	err := t.fromScene.Update()
 	if err != nil {
@@ -41,61 +41,41 @@ func (t *BaseTransition[T, M]) Update() error {
 }
 
 // Layout updates the layout of the scenes
-func (t *BaseTransition[T, M]) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (t *BaseTransition[T]) Layout(outsideWidth, outsideHeight int) (int, int) {
 	sw, sh := t.fromScene.Layout(outsideWidth, outsideHeight)
 	tw, th := t.toScene.Layout(outsideWidth, outsideHeight)
 
 	return MaxInt(sw, tw), MaxInt(sh, th)
 }
 
-func (s *SceneManager[T]) ReturnFromTransition(scene, orgin Scene[T, *SceneManager[T]]) {
-	if c, ok := scene.(TransitionAwareScene[T, *SceneManager[T]]); ok {
-		c.PostTransition(orgin.Unload(), orgin)
-	} else {
-		scene.Load(orgin.Unload(), s)
-	}
-	s.current = scene
-}
-
-func (s *SceneManager[T]) SwitchWithTransition(scene Scene[T, *SceneManager[T]], transition SceneTransition[T, *SceneManager[T]]) {
-	sc := s.current.(Scene[T, *SceneManager[T]])
-	transition.Start(sc, scene, s)
-	if c, ok := sc.(TransitionAwareScene[T, *SceneManager[T]]); ok {
-		scene.Load(c.PreTransition(scene), s)
-	} else {
-		scene.Load(sc.Unload(), s)
-	}
-	s.current = transition
-}
-
 // Ends transition to the next scene
-func (t *BaseTransition[T, M]) End() {
-	t.sm.ReturnFromTransition(t.toScene.(Scene[T, *SceneManager[T]]), t.fromScene.(Scene[T, *SceneManager[T]]))
+func (t *BaseTransition[T]) End() {
+	t.sm.ReturnFromTransition(t.toScene.(Scene[T]), t.fromScene.(Scene[T]))
 }
 
-type FadeTransition[T any, M SceneController[T]] struct {
-	BaseTransition[T, M]
+type FadeTransition[T any] struct {
+	BaseTransition[T]
 	factor       float32 // factor used for the fade-in/fade-out effect
 	alpha        float32 // alpha value used for the fade-in/fade-out effect
 	isFadingIn   bool    // whether the transition is currently fading in or out
 	frameUpdated bool
 }
 
-func NewFadeTransition[T any, M SceneController[T]](factor float32) *FadeTransition[T, M] {
-	return &FadeTransition[T, M]{
+func NewFadeTransition[T any](factor float32) *FadeTransition[T] {
+	return &FadeTransition[T]{
 		factor: factor,
 	}
 }
 
 // Start starts the transition from the given "from" scene to the given "to" scene
-func (t *FadeTransition[T, M]) Start(fromScene, toScene Scene[T, M], sm *SceneManager[T]) {
+func (t *FadeTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.BaseTransition.Start(fromScene, toScene, sm)
 	t.alpha = 0
 	t.isFadingIn = true
 }
 
 // Update updates the transition state
-func (t *FadeTransition[T, M]) Update() error {
+func (t *FadeTransition[T]) Update() error {
 	if !t.frameUpdated {
 		// Update the alpha value based on the current state of the transition
 		if t.isFadingIn {
@@ -119,7 +99,7 @@ func (t *FadeTransition[T, M]) Update() error {
 }
 
 // Draw draws the transition effect
-func (t *FadeTransition[T, M]) Draw(screen *ebiten.Image) {
+func (t *FadeTransition[T]) Draw(screen *ebiten.Image) {
 	toImg, fromImg := PreDraw(screen.Bounds(), t.fromScene, t.toScene)
 	toOp, fromOp := &ebiten.DrawImageOptions{}, &ebiten.DrawImageOptions{}
 
@@ -140,8 +120,8 @@ func (t *FadeTransition[T, M]) Draw(screen *ebiten.Image) {
 	t.frameUpdated = false
 }
 
-type SlideTransition[T any, M SceneController[T]] struct {
-	BaseTransition[T, M]
+type SlideTransition[T any] struct {
+	BaseTransition[T]
 	factor       float64 // factor used for the slide-in/slide-out effect
 	direction    SlideDirection
 	offset       float64
@@ -157,21 +137,21 @@ const (
 	BottomToTop
 )
 
-func NewSlideTransition[T any, M SceneController[T]](direction SlideDirection, factor float64) *SlideTransition[T, M] {
-	return &SlideTransition[T, M]{
+func NewSlideTransition[T any](direction SlideDirection, factor float64) *SlideTransition[T] {
+	return &SlideTransition[T]{
 		direction: direction,
 		factor:    factor,
 	}
 }
 
 // Start starts the transition from the given "from" scene to the given "to" scene
-func (t *SlideTransition[T, M]) Start(fromScene Scene[T, M], toScene Scene[T, M], sm *SceneManager[T]) {
+func (t *SlideTransition[T]) Start(fromScene Scene[T], toScene Scene[T], sm SceneController[T]) {
 	t.BaseTransition.Start(fromScene, toScene, sm)
 	t.offset = 0
 }
 
 // Update updates the transition state
-func (t *SlideTransition[T, M]) Update() error {
+func (t *SlideTransition[T]) Update() error {
 	if !t.frameUpdated {
 		// Update the offset value based on the current state of the transition
 		if t.offset >= 1.0 {
@@ -188,7 +168,7 @@ func (t *SlideTransition[T, M]) Update() error {
 }
 
 // Draw draws the transition effect
-func (t *SlideTransition[T, M]) Draw(screen *ebiten.Image) {
+func (t *SlideTransition[T]) Draw(screen *ebiten.Image) {
 	toImg, fromImg := PreDraw(screen.Bounds(), t.fromScene, t.toScene)
 	toOp, fromOp := &ebiten.DrawImageOptions{}, &ebiten.DrawImageOptions{}
 
@@ -221,29 +201,29 @@ func (t *SlideTransition[T, M]) Draw(screen *ebiten.Image) {
 
 // Timed Variants of the transition
 
-func NewTicksTimedFadeTransition[T any, M SceneController[T]](duration time.Duration) *FadeTransition[T, M] {
-	return NewFadeTransition[T, M](float32(DurationToFactor(float64(ebiten.TPS()), duration)))
+func NewTicksTimedFadeTransition[T any](duration time.Duration) *FadeTransition[T] {
+	return NewFadeTransition[T](float32(DurationToFactor(float64(ebiten.TPS()), duration)))
 }
 
-type TimedFadeTransition[T any, M SceneController[T]] struct {
-	FadeTransition[T, M]
+type TimedFadeTransition[T any] struct {
+	FadeTransition[T]
 	initialTime time.Time
 	duration    time.Duration
 }
 
-func NewDurationTimedFadeTransition[T any, M SceneController[T]](duration time.Duration) *TimedFadeTransition[T, M] {
-	return &TimedFadeTransition[T, M]{
+func NewDurationTimedFadeTransition[T any](duration time.Duration) *TimedFadeTransition[T] {
+	return &TimedFadeTransition[T]{
 		duration:       duration,
-		FadeTransition: *NewFadeTransition[T, M](0.),
+		FadeTransition: *NewFadeTransition[T](0.),
 	}
 }
 
-func (t *TimedFadeTransition[T, M]) Start(fromScene, toScene Scene[T, M], sm *SceneManager[T]) {
+func (t *TimedFadeTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.FadeTransition.Start(fromScene, toScene, sm)
 	t.initialTime = Clock.Now()
 }
 
-func (t *TimedFadeTransition[T, M]) Update() error {
+func (t *TimedFadeTransition[T]) Update() error {
 	if !t.frameUpdated {
 		// Update the alpha value based on the current state of the transition
 		if t.isFadingIn {
@@ -267,29 +247,29 @@ func (t *TimedFadeTransition[T, M]) Update() error {
 
 }
 
-func NewTicksTimedSlideTransition[T any, M SceneController[T]](direction SlideDirection, duration time.Duration) *SlideTransition[T, M] {
-	return NewSlideTransition[T, M](direction, DurationToFactor(float64(ebiten.TPS()), duration))
+func NewTicksTimedSlideTransition[T any](direction SlideDirection, duration time.Duration) *SlideTransition[T] {
+	return NewSlideTransition[T](direction, DurationToFactor(float64(ebiten.TPS()), duration))
 }
 
-type TimedSlideTransition[T any, M SceneController[T]] struct {
-	SlideTransition[T, M]
+type TimedSlideTransition[T any] struct {
+	SlideTransition[T]
 	initialTime time.Time
 	duration    time.Duration
 }
 
-func NewDurationTimedSlideTransition[T any, M SceneController[T]](direction SlideDirection, duration time.Duration) *TimedSlideTransition[T, M] {
-	return &TimedSlideTransition[T, M]{
+func NewDurationTimedSlideTransition[T any](direction SlideDirection, duration time.Duration) *TimedSlideTransition[T] {
+	return &TimedSlideTransition[T]{
 		duration:        duration,
-		SlideTransition: *NewSlideTransition[T, M](direction, 0.),
+		SlideTransition: *NewSlideTransition[T](direction, 0.),
 	}
 }
 
-func (t *TimedSlideTransition[T, M]) Start(fromScene, toScene Scene[T, M], sm *SceneManager[T]) {
+func (t *TimedSlideTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.SlideTransition.Start(fromScene, toScene, sm)
 	t.initialTime = Clock.Now()
 }
 
-func (t *TimedSlideTransition[T, M]) Update() error {
+func (t *TimedSlideTransition[T]) Update() error {
 	if !t.frameUpdated {
 		// Update the offset value based on the current state of the transition
 		if t.offset >= 1.0 {
