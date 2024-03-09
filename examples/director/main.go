@@ -34,9 +34,9 @@ func (s *BaseScene) Layout(w, h int) (int, int) {
 	return w, h
 }
 
-func (s *BaseScene) Load(st State, sm *stagehand.SceneDirector[State]) {
+func (s *BaseScene) Load(st State, sm stagehand.SceneController[State]) {
 	s.count = st
-	s.sm = sm
+	s.sm = sm.(*stagehand.SceneDirector[State])
 }
 
 func (s *BaseScene) Unload() State {
@@ -90,12 +90,17 @@ func main() {
 
 	s1 := &FirstScene{}
 	s2 := &SecondScene{}
-	rs := map[stagehand.Scene[State, *stagehand.SceneDirector[State]]][]stagehand.Directive[State]{
+	trans := stagehand.NewSlideTransition[State](stagehand.BottomToTop, 0.05)
+	rs := map[stagehand.Scene[State]][]stagehand.Directive[State]{
 		s1: []stagehand.Directive[State]{
 			stagehand.Directive[State]{Dest: s2, Trigger: Trigger},
 		},
 		s2: []stagehand.Directive[State]{
-			stagehand.Directive[State]{Dest: s1, Trigger: Trigger},
+			stagehand.Directive[State]{
+				Dest:       s1,
+				Trigger:    Trigger,
+				Transition: trans,
+			},
 		},
 	}
 	sm := stagehand.NewSceneDirector[State](s1, state, rs)

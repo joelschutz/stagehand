@@ -30,9 +30,9 @@ func (s *BaseScene) Layout(w, h int) (int, int) {
 	return w, h
 }
 
-func (s *BaseScene) Load(st State, sm *stagehand.SceneManager[State]) {
+func (s *BaseScene) Load(st State, sm stagehand.SceneController[State]) {
 	s.count = st
-	s.sm = sm
+	s.sm = sm.(*stagehand.SceneManager[State])
 }
 
 func (s *BaseScene) Unload() State {
@@ -67,7 +67,7 @@ func (s *SecondScene) Update() error {
 		s.count--
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&ThirdScene{}, stagehand.NewFadeTransition[State, *stagehand.SceneManager[State]](.05))
+		s.sm.SwitchWithTransition(&ThirdScene{}, stagehand.NewFadeTransition[State](.05))
 	}
 	return nil
 }
@@ -86,7 +86,7 @@ func (s *ThirdScene) Update() error {
 		s.count *= 2
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State, *stagehand.SceneManager[State]](stagehand.RightToLeft, .05))
+		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State](stagehand.RightToLeft, .05))
 	}
 	return nil
 }
