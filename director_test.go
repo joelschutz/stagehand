@@ -6,17 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type DirectidScene struct {
-	MockScene
-}
-
-func (m *DirectidScene) Load(state int, sm SceneController[int]) {
-	m.loadCalled = true
-	m.unloadReturns = state
-}
-
 func TestSceneDirector_NewSceneDirector(t *testing.T) {
-	mockScene := &DirectidScene{}
+	mockScene := &MockScene{}
 	ruleSet := make(map[Scene[int]][]Directive[int])
 
 	director := NewSceneDirector[int](mockScene, 1, ruleSet)
@@ -26,8 +17,8 @@ func TestSceneDirector_NewSceneDirector(t *testing.T) {
 }
 
 func TestSceneDirector_ProcessTrigger(t *testing.T) {
-	mockScene := &DirectidScene{}
-	mockScene2 := &DirectidScene{}
+	mockScene := &MockScene{}
+	mockScene2 := &MockScene{}
 	ruleSet := make(map[Scene[int]][]Directive[int])
 
 	director := NewSceneDirector[int](mockScene, 1, ruleSet)
@@ -44,14 +35,36 @@ func TestSceneDirector_ProcessTrigger(t *testing.T) {
 	assert.Equal(t, rule.Dest, director.current)
 }
 
-func TestSceneDirector_ProcessTriggerWiithTransition(t *testing.T) {
-	mockScene := &DirectidScene{}
+func TestSceneDirector_ProcessTriggerWithTransition(t *testing.T) {
+	mockScene := &MockScene{}
 	mockTransition := &baseTransitionImplementation{}
 	ruleSet := make(map[Scene[int]][]Directive[int])
 
 	director := NewSceneDirector[int](mockScene, 1, ruleSet)
 
-	rule := Directive[int]{Dest: &DirectidScene{}, Trigger: 2, Transition: mockTransition}
+	rule := Directive[int]{Dest: &MockScene{}, Trigger: 2, Transition: mockTransition}
+	ruleSet[mockScene] = []Directive[int]{rule}
+
+	// Call the ProcessTrigger method with wrong trigger
+	director.ProcessTrigger(1)
+	assert.NotEqual(t, rule.Transition, director.current)
+
+	// Call the ProcessTrigger method with correct trigger
+	director.ProcessTrigger(2)
+	assert.Equal(t, rule.Transition, director.current)
+
+	rule.Transition.End()
+	assert.Equal(t, rule.Dest, director.current)
+}
+
+func TestSceneDirector_ProcessTriggerWithTransitionAwareness(t *testing.T) {
+	mockScene := &MockTransitionAwareScene{}
+	mockTransition := &baseTransitionImplementation{}
+	ruleSet := make(map[Scene[int]][]Directive[int])
+
+	director := NewSceneDirector[int](mockScene, 1, ruleSet)
+
+	rule := Directive[int]{Dest: &MockTransitionAwareScene{}, Trigger: 2, Transition: mockTransition}
 	ruleSet[mockScene] = []Directive[int]{rule}
 
 	// Call the ProcessTrigger method with wrong trigger
