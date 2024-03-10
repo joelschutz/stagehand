@@ -31,9 +31,9 @@ func (s *BaseScene) Layout(w, h int) (int, int) {
 	return w, h
 }
 
-func (s *BaseScene) Load(st State, sm *stagehand.SceneManager[State]) {
+func (s *BaseScene) Load(st State, sm stagehand.SceneController[State]) {
 	s.count = st
-	s.sm = sm
+	s.sm = sm.(*stagehand.SceneManager[State])
 }
 
 func (s *BaseScene) Unload() State {

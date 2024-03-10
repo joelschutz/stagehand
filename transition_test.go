@@ -1,6 +1,7 @@
 package stagehand
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,11 +24,26 @@ type baseTransitionImplementation struct {
 
 func (b *baseTransitionImplementation) Draw(screen *ebiten.Image) {}
 
+type MockTransitionAwareScene struct {
+	MockScene
+	preTransitionCalled  bool
+	postTransitionCalled bool
+}
+
+func (m *MockTransitionAwareScene) PreTransition(fromScene Scene[int]) int {
+	m.preTransitionCalled = true
+	return 0
+}
+
+func (m *MockTransitionAwareScene) PostTransition(state int, toScene Scene[int]) {
+	m.postTransitionCalled = true
+}
+
 func TestBaseTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	err := trans.Update()
 	assert.NoError(t, err)
@@ -39,7 +55,7 @@ func TestBaseTransition_Layout(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	sw, sh := trans.Layout(100, 100)
 	assert.Equal(t, 100, sw)
@@ -49,37 +65,15 @@ func TestBaseTransition_Layout(t *testing.T) {
 	assert.True(t, to.layoutCalled)
 }
 
-func TestBaseTransition_Load(t *testing.T) {
-	from := &MockScene{}
-	to := &MockScene{}
-	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-	trans.Load(42, &SceneManager[int]{})
-
-	assert.True(t, to.loadCalled)
-	assert.False(t, from.loadCalled)
-
-}
-
-func TestBaseTransition_Unload(t *testing.T) {
-	from := &MockScene{}
-	to := &MockScene{}
-	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-
-	trans.Unload()
-	assert.True(t, from.unloadCalled)
-	assert.False(t, to.unloadCalled)
-}
-
 func TestBaseTransition_End(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
-
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 	trans.End()
+
+	fmt.Println(sm.current.(Scene[int]), to)
 	assert.Equal(t, to, sm.current)
 }
 
@@ -87,10 +81,27 @@ func TestBaseTransition_Start(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := &baseTransitionImplementation{}
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)
+}
+
+func TestBaseTransition_Awareness(t *testing.T) {
+	from := &MockTransitionAwareScene{}
+	to := &MockTransitionAwareScene{}
+	sm := NewSceneManager[int](from, 0)
+	trans := &baseTransitionImplementation{}
+	sm.SwitchWithTransition(to, trans)
+
+	assert.True(t, from.preTransitionCalled)
+	assert.True(t, to.loadCalled)
+	assert.False(t, from.unloadCalled)
+	assert.False(t, to.postTransitionCalled)
+
+	trans.End()
+	assert.True(t, from.unloadCalled)
+	assert.True(t, to.postTransitionCalled)
 }
 
 func TestFadeTransition_UpdateOncePerFrame(t *testing.T) {
@@ -98,7 +109,7 @@ func TestFadeTransition_UpdateOncePerFrame(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewFadeTransition[int](value)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	err := trans.Update()
 	assert.NoError(t, err)
@@ -114,8 +125,8 @@ func TestFadeTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewFadeTransition[int](.5)
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 
 	err := sm.Update()
 	assert.NoError(t, err)
@@ -149,7 +160,7 @@ func TestFadeTransition_Start(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewFadeTransition[int](.5)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)
@@ -161,7 +172,7 @@ func TestFadeTransition_Draw(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewFadeTransition[int](.5)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	trans.Update()
 	trans.Draw(ebiten.NewImage(100, 100))
@@ -177,7 +188,7 @@ func TestSlideTransition_UpdateOncePerFrame(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewSlideTransition[int](RightToLeft, value)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	err := trans.Update()
 	assert.NoError(t, err)
@@ -198,8 +209,8 @@ func TestSlideTransition_Update(t *testing.T) {
 
 	for _, direction := range variations {
 		trans := NewSlideTransition[int](direction, .5)
-		trans.Start(from, to)
-		sm := NewSceneManager[int](trans, 0)
+		sm := NewSceneManager[int](from, 0)
+		sm.SwitchWithTransition(to, trans)
 
 		err := sm.Update()
 		assert.NoError(t, err)
@@ -224,7 +235,7 @@ func TestSlideTransition_Start(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewSlideTransition[int](TopToBottom, .5)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)
@@ -241,7 +252,7 @@ func TestSlideTransition_Draw(t *testing.T) {
 
 	for _, direction := range variations {
 		trans := NewSlideTransition[int](direction, .5)
-		trans.Start(from, to)
+		trans.Start(from, to, nil)
 
 		trans.Update()
 		trans.Draw(ebiten.NewImage(100, 100))
@@ -255,8 +266,8 @@ func TestTimedFadeTransition_Update(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewDurationTimedFadeTransition[int](time.Second)
-	trans.Start(from, to)
-	sm := NewSceneManager[int](trans, 0)
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
 
 	// Should not update if no time passed
 	err := sm.Update()
@@ -304,7 +315,7 @@ func TestTimedFadeTransition_Start(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewDurationTimedFadeTransition[int](time.Second)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)
@@ -322,8 +333,8 @@ func TestTimedSlideTransition_Update(t *testing.T) {
 	for _, direction := range variations {
 		Clock = &MockClock{currentTime: time.Now()}
 		trans := NewDurationTimedSlideTransition[int](direction, time.Second)
-		trans.Start(from, to)
-		sm := NewSceneManager[int](trans, 0)
+		sm := NewSceneManager[int](from, 0)
+		sm.SwitchWithTransition(to, trans)
 
 		// Should not update if no time passed
 		err := sm.Update()
@@ -360,7 +371,7 @@ func TestTimedSlideTransition_Start(t *testing.T) {
 	from := &MockScene{}
 	to := &MockScene{}
 	trans := NewDurationTimedSlideTransition[int](TopToBottom, time.Second)
-	trans.Start(from, to)
+	trans.Start(from, to, nil)
 
 	assert.Equal(t, from, trans.fromScene)
 	assert.Equal(t, to, trans.toScene)

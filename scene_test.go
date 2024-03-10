@@ -16,7 +16,7 @@ type MockScene struct {
 	unloadReturns int
 }
 
-func (m *MockScene) Load(state int, sm *SceneManager[int]) {
+func (m *MockScene) Load(state int, sm SceneController[int]) {
 	m.loadCalled = true
 	m.unloadReturns = state
 }
@@ -44,12 +44,13 @@ type MockTransition[T any] struct {
 	fromScene   Scene[T]
 	toScene     Scene[T]
 	startCalled bool
-	state       T
 }
 
-func NewMockTransition[T any]() *MockTransition[T] { return &MockTransition[T]{} }
+func NewMockTransition[T any]() *MockTransition[T] {
+	return &MockTransition[T]{}
+}
 
-func (t *MockTransition[T]) Start(fromScene, toScene Scene[T]) {
+func (t *MockTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.fromScene = fromScene
 	t.toScene = toScene
 	t.startCalled = true
@@ -60,10 +61,6 @@ func (t *MockTransition[T]) End() {}
 func (t *MockTransition[T]) Update() error { return nil }
 
 func (t *MockTransition[T]) Draw(screen *ebiten.Image) {}
-
-func (t *MockTransition[T]) Load(state T, sm *SceneManager[T]) { t.state = state }
-
-func (t *MockTransition[T]) Unload() T { return t.state }
 
 func (t *MockTransition[T]) Layout(w, h int) (int, int) { return w, h }
 
@@ -113,10 +110,12 @@ func TestSceneManager_Layout(t *testing.T) {
 }
 
 func TestSceneManager_Load_Unload(t *testing.T) {
-	sm := NewSceneManager[int](&MockScene{}, 42)
-	mockScene := &MockScene{}
-	sm.SwitchTo(mockScene)
-	unloaded := sm.current.Unload()
-	assert.True(t, mockScene.unloadCalled)
-	assert.Equal(t, 42, unloaded)
+	from := &MockScene{}
+	to := &MockScene{}
+	sm := NewSceneManager[int](from, 42)
+	sm.SwitchTo(to)
+
+	assert.True(t, to.loadCalled)
+	assert.True(t, from.unloadCalled)
+	assert.Equal(t, 42, sm.current.(Scene[int]).Unload())
 }

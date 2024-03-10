@@ -7,20 +7,21 @@ import (
 )
 
 type SceneTransition[T any] interface {
-	Scene[T]
-	Start(fromScene, toScene Scene[T])
+	ProtoScene[T]
+	Start(fromScene, toScene Scene[T], sm SceneController[T])
 	End()
 }
 
 type BaseTransition[T any] struct {
 	fromScene Scene[T]
 	toScene   Scene[T]
-	sm        *SceneManager[T]
+	sm        SceneController[T]
 }
 
-func (t *BaseTransition[T]) Start(fromScene, toScene Scene[T]) {
+func (t *BaseTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
 	t.fromScene = fromScene
 	t.toScene = toScene
+	t.sm = sm
 }
 
 // Update updates the transition state
@@ -47,20 +48,9 @@ func (t *BaseTransition[T]) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return MaxInt(sw, tw), MaxInt(sh, th)
 }
 
-// Loads the next scene
-func (t *BaseTransition[T]) Load(state T, manager *SceneManager[T]) {
-	t.sm = manager
-	t.toScene.Load(state, manager)
-}
-
-// Unloads the last scene
-func (t *BaseTransition[T]) Unload() T {
-	return t.fromScene.Unload()
-}
-
 // Ends transition to the next scene
 func (t *BaseTransition[T]) End() {
-	t.sm.SwitchTo(t.toScene)
+	t.sm.ReturnFromTransition(t.toScene.(Scene[T]), t.fromScene.(Scene[T]))
 }
 
 type FadeTransition[T any] struct {
@@ -78,8 +68,8 @@ func NewFadeTransition[T any](factor float32) *FadeTransition[T] {
 }
 
 // Start starts the transition from the given "from" scene to the given "to" scene
-func (t *FadeTransition[T]) Start(fromScene, toScene Scene[T]) {
-	t.BaseTransition.Start(fromScene, toScene)
+func (t *FadeTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
+	t.BaseTransition.Start(fromScene, toScene, sm)
 	t.alpha = 0
 	t.isFadingIn = true
 }
@@ -155,8 +145,8 @@ func NewSlideTransition[T any](direction SlideDirection, factor float64) *SlideT
 }
 
 // Start starts the transition from the given "from" scene to the given "to" scene
-func (t *SlideTransition[T]) Start(fromScene Scene[T], toScene Scene[T]) {
-	t.BaseTransition.Start(fromScene, toScene)
+func (t *SlideTransition[T]) Start(fromScene Scene[T], toScene Scene[T], sm SceneController[T]) {
+	t.BaseTransition.Start(fromScene, toScene, sm)
 	t.offset = 0
 }
 
@@ -228,8 +218,8 @@ func NewDurationTimedFadeTransition[T any](duration time.Duration) *TimedFadeTra
 	}
 }
 
-func (t *TimedFadeTransition[T]) Start(fromScene, toScene Scene[T]) {
-	t.FadeTransition.Start(fromScene, toScene)
+func (t *TimedFadeTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
+	t.FadeTransition.Start(fromScene, toScene, sm)
 	t.initialTime = Clock.Now()
 }
 
@@ -274,8 +264,8 @@ func NewDurationTimedSlideTransition[T any](direction SlideDirection, duration t
 	}
 }
 
-func (t *TimedSlideTransition[T]) Start(fromScene, toScene Scene[T]) {
-	t.SlideTransition.Start(fromScene, toScene)
+func (t *TimedSlideTransition[T]) Start(fromScene, toScene Scene[T], sm SceneController[T]) {
+	t.SlideTransition.Start(fromScene, toScene, sm)
 	t.initialTime = Clock.Now()
 }
 

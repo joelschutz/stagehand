@@ -17,7 +17,10 @@ const (
 	screenHeight = 480
 )
 
-type State int
+type State struct {
+	Count        int
+	OnTransition bool
+}
 
 type BaseScene struct {
 	bounds image.Rectangle
@@ -39,23 +42,36 @@ func (s *BaseScene) Unload() State {
 	return s.count
 }
 
+func (s *BaseScene) PreTransition(toScene stagehand.Scene[State]) State {
+	s.count.OnTransition = true
+	return s.count
+}
+
+func (s *BaseScene) PostTransition(state State, fromScene stagehand.Scene[State]) {
+	s.count.OnTransition = false
+}
+
 type FirstScene struct {
 	BaseScene
 }
 
 func (s *FirstScene) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		s.count++
+		s.count.Count++
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchTo(&SecondScene{})
+		s.sm.SwitchWithTransition(&SecondScene{}, stagehand.NewSlideTransition[State](stagehand.TopToBottom, .05))
 	}
 	return nil
 }
 
 func (s *FirstScene) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{255, 0, 0, 255}) // Fill Red
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
+	if s.count.OnTransition {
+		screen.Fill(color.RGBA{0, 0, 0, 255}) // Fill Black
+	} else {
+		screen.Fill(color.RGBA{255, 0, 0, 255}) // Fill Red
+	}
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count.Count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
 }
 
 type SecondScene struct {
@@ -64,36 +80,22 @@ type SecondScene struct {
 
 func (s *SecondScene) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		s.count--
+		s.count.Count--
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&ThirdScene{}, stagehand.NewFadeTransition[State](.05))
+		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State](stagehand.BottomToTop, .05))
 	}
 	return nil
 }
 
 func (s *SecondScene) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{0, 0, 255, 255}) // Fill Blue
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
-}
-
-type ThirdScene struct {
-	BaseScene
-}
-
-func (s *ThirdScene) Update() error {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		s.count *= 2
+	if s.count.OnTransition {
+		screen.Fill(color.RGBA{255, 255, 255, 255}) // Fill White
+	} else {
+		screen.Fill(color.RGBA{0, 0, 255, 255}) // Fill Blue
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.sm.SwitchWithTransition(&FirstScene{}, stagehand.NewSlideTransition[State](stagehand.RightToLeft, .05))
-	}
-	return nil
-}
 
-func (s *ThirdScene) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{0, 255, 0, 255}) // Fill Green
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count.Count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
 }
 
 func main() {
@@ -101,7 +103,7 @@ func main() {
 	ebiten.SetWindowTitle("My Game")
 	ebiten.SetWindowResizable(true)
 
-	state := State(10)
+	state := State{Count: 10}
 
 	s := &FirstScene{}
 	sm := stagehand.NewSceneManager[State](s, state)
