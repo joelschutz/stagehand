@@ -19,8 +19,8 @@ const (
 
 type State int
 
-var (
-	Trigger stagehand.SceneTransitionTrigger = 1
+const (
+	Trigger stagehand.SceneTransitionTrigger = iota
 )
 
 type BaseScene struct {
