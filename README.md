@@ -245,6 +245,10 @@ func (s *MyScene) Update() error {
 }
 ```
 
+## Acknowledgments
+
+- When switching scenes (i.e. calling `SwitchTo`, `SwitchWithTransition` or `ProcessTrigger`) while a transition is running it will immediately be canceled and the new switch will be started. To prevent this behavior use a TransitionAwareScene and prevent this methods to be called.
+
 ## Contribution
 
 Contributions are welcome! If you find a bug or have a feature request, please open an issue on GitHub. If you would like to contribute code, please fork the repository and submit a pull request.
