@@ -14,6 +14,10 @@ func NewSceneManager[T any](scene Scene[T], state T) *SceneManager[T] {
 
 // Scene Switching
 func (s *SceneManager[T]) SwitchTo(scene Scene[T]) {
+	if prevTransition, ok := s.current.(SceneTransition[T]); ok {
+		// previous transition is still running, end it first
+		prevTransition.End()
+	}
 	if c, ok := s.current.(Scene[T]); ok {
 		scene.Load(c.Unload(), s)
 		s.current = scene
