@@ -104,6 +104,35 @@ func TestBaseTransition_Awareness(t *testing.T) {
 	assert.True(t, to.postTransitionCalled)
 }
 
+func TestBaseTransition_SwitchCanceling(t *testing.T) {
+	from := &MockScene{}
+	to := &MockScene{}
+	trans := &baseTransitionImplementation{}
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, trans)
+
+	// Assert transition is running
+	assert.Equal(t, trans, sm.current)
+
+	sm.SwitchTo(to)
+	assert.Equal(t, to, sm.current)
+}
+
+func TestBaseTransition_TransitionCanceling(t *testing.T) {
+	from := &MockScene{}
+	to := &MockScene{}
+	transA := &baseTransitionImplementation{}
+	transB := &baseTransitionImplementation{}
+	sm := NewSceneManager[int](from, 0)
+	sm.SwitchWithTransition(to, transA)
+
+	// Assert transition is running
+	assert.Equal(t, transA, sm.current)
+
+	sm.SwitchWithTransition(to, transB)
+	assert.Equal(t, transB, sm.current)
+}
+
 func TestFadeTransition_UpdateOncePerFrame(t *testing.T) {
 	var value float32 = .6
 	from := &MockScene{}
