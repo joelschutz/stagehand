@@ -24,9 +24,10 @@ const (
 )
 
 type BaseScene struct {
-	bounds image.Rectangle
-	count  State
-	sm     *stagehand.SceneDirector[State]
+	bounds    image.Rectangle
+	count     State
+	Condition State
+	sm        *stagehand.SceneDirector[State]
 }
 
 func (s *BaseScene) Layout(w, h int) (int, int) {
@@ -51,7 +52,7 @@ func (s *FirstScene) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		s.count++
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) && s.count == s.Condition {
 		s.sm.ProcessTrigger(Trigger)
 	}
 	return nil
@@ -59,7 +60,7 @@ func (s *FirstScene) Update() error {
 
 func (s *FirstScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{255, 0, 0, 255}) // Fill Red
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s\nCan Switch? %v", s.count, s.bounds.Max, s.count == s.Condition), s.bounds.Dx()/2, s.bounds.Dy()/2)
 }
 
 type SecondScene struct {
@@ -70,7 +71,7 @@ func (s *SecondScene) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		s.count--
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) && s.count <= s.Condition {
 		s.sm.ProcessTrigger(Trigger)
 	}
 	return nil
@@ -78,7 +79,7 @@ func (s *SecondScene) Update() error {
 
 func (s *SecondScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0, 0, 255, 255}) // Fill Blue
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s\nCan Switch? %v", s.count, s.bounds.Max, s.count <= s.Condition), s.bounds.Dx()/2, s.bounds.Dy()/2)
 }
 
 type ThirdScene struct {
@@ -87,9 +88,9 @@ type ThirdScene struct {
 
 func (s *ThirdScene) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		s.count--
+		s.count++
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) && s.count >= s.Condition {
 		s.sm.ProcessTrigger(Trigger)
 	}
 	return nil
@@ -97,7 +98,7 @@ func (s *ThirdScene) Update() error {
 
 func (s *ThirdScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0, 255, 0, 255}) // Fill Green
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s", s.count, s.bounds.Max), s.bounds.Dx()/2, s.bounds.Dy()/2)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Count: %v, WindowSize: %s\nCan Switch? %v", s.count, s.bounds.Max, s.count >= s.Condition), s.bounds.Dx()/2, s.bounds.Dy()/2)
 }
 
 func main() {
@@ -107,9 +108,9 @@ func main() {
 
 	state := State(10)
 
-	s1 := &FirstScene{}
-	s2 := &SecondScene{}
-	s3 := &ThirdScene{}
+	s1 := &FirstScene{BaseScene{Condition: 10}}
+	s2 := &SecondScene{BaseScene{Condition: 5}}
+	s3 := &ThirdScene{BaseScene{Condition: 15}}
 	trans := stagehand.NewSlideTransition[State](stagehand.BottomToTop, 0.02)
 	trans2 := stagehand.NewSlideTransition[State](stagehand.TopToBottom, 0.02)
 	trans3 := stagehand.NewSlideTransition[State](stagehand.LeftToRight, 0.02)
