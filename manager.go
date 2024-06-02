@@ -14,6 +14,10 @@ func NewSceneManager[T any](scene Scene[T], state T) *SceneManager[T] {
 
 // Scene Switching
 func (s *SceneManager[T]) SwitchTo(scene Scene[T]) {
+	if prevTransition, ok := s.current.(SceneTransition[T]); ok {
+		// previous transition is still running, end it first
+		prevTransition.End()
+	}
 	if c, ok := s.current.(Scene[T]); ok {
 		scene.Load(c.Unload(), s)
 		s.current = scene
@@ -21,6 +25,10 @@ func (s *SceneManager[T]) SwitchTo(scene Scene[T]) {
 }
 
 func (s *SceneManager[T]) SwitchWithTransition(scene Scene[T], transition SceneTransition[T]) {
+	if prevTransition, ok := s.current.(SceneTransition[T]); ok {
+		// previous transition is still running, end it to start the next transition
+		prevTransition.End()
+	}
 	sc := s.current.(Scene[T])
 	transition.Start(sc, scene, s)
 	if c, ok := sc.(TransitionAwareScene[T]); ok {
@@ -31,11 +39,11 @@ func (s *SceneManager[T]) SwitchWithTransition(scene Scene[T], transition SceneT
 	s.current = transition
 }
 
-func (s *SceneManager[T]) ReturnFromTransition(scene, orgin Scene[T]) {
+func (s *SceneManager[T]) ReturnFromTransition(scene, origin Scene[T]) {
 	if c, ok := scene.(TransitionAwareScene[T]); ok {
-		c.PostTransition(orgin.Unload(), orgin)
+		c.PostTransition(origin.Unload(), origin)
 	} else {
-		scene.Load(orgin.Unload(), s)
+		scene.Load(origin.Unload(), s)
 	}
 	s.current = scene
 }

@@ -50,7 +50,7 @@ func (t *BaseTransition[T]) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 // Ends transition to the next scene
 func (t *BaseTransition[T]) End() {
-	t.sm.ReturnFromTransition(t.toScene.(Scene[T]), t.fromScene.(Scene[T]))
+	t.sm.ReturnFromTransition(t.toScene, t.fromScene)
 }
 
 type FadeTransition[T any] struct {

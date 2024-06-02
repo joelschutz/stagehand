@@ -24,6 +24,11 @@ func NewSceneDirector[T any](scene Scene[T], state T, RuleSet map[Scene[T]][]Dir
 
 // ProcessTrigger finds if a transition should be triggered
 func (d *SceneDirector[T]) ProcessTrigger(trigger SceneTransitionTrigger) {
+	if prevTransition, ok := d.current.(SceneTransition[T]); ok {
+		// previous transition is still running, end it to process trigger
+		prevTransition.End()
+	}
+
 	for _, directive := range d.RuleSet[d.current.(Scene[T])] {
 		if directive.Trigger == trigger {
 			if directive.Transition != nil {
@@ -50,11 +55,11 @@ func (d *SceneDirector[T]) ProcessTrigger(trigger SceneTransitionTrigger) {
 	}
 }
 
-func (d *SceneDirector[T]) ReturnFromTransition(scene, orgin Scene[T]) {
+func (d *SceneDirector[T]) ReturnFromTransition(scene, origin Scene[T]) {
 	if c, ok := scene.(TransitionAwareScene[T]); ok {
-		c.PostTransition(orgin.Unload(), orgin)
+		c.PostTransition(origin.Unload(), origin)
 	} else {
-		scene.Load(orgin.Unload(), d)
+		scene.Load(origin.Unload(), d)
 	}
 	d.current = scene
 }

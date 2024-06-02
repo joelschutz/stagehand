@@ -78,3 +78,48 @@ func TestSceneDirector_ProcessTriggerWithTransitionAwareness(t *testing.T) {
 	rule.Transition.End()
 	assert.Equal(t, rule.Dest, director.current)
 }
+
+func TestSceneDirector_ProcessTriggerCancelling(t *testing.T) {
+	mockScene := &MockScene{}
+	mockTransition := &baseTransitionImplementation{}
+	ruleSet := make(map[Scene[int]][]Directive[int])
+
+	director := NewSceneDirector[int](mockScene, 1, ruleSet)
+
+	rule := Directive[int]{Dest: &MockScene{}, Trigger: 2, Transition: mockTransition}
+	ruleSet[mockScene] = []Directive[int]{rule}
+	director.ProcessTrigger(2)
+
+	// Assert transition is running
+	assert.Equal(t, rule.Transition, director.current)
+
+	director.ProcessTrigger(1)
+	assert.Equal(t, rule.Dest, director.current)
+}
+
+func TestSceneDirector_ProcessTriggerCancellingToNewTransition(t *testing.T) {
+	mockSceneA := &MockScene{}
+	mockSceneB := &MockScene{}
+	mockTransitionA := &baseTransitionImplementation{}
+	mockTransitionB := &baseTransitionImplementation{}
+	ruleSet := make(map[Scene[int]][]Directive[int])
+
+	director := NewSceneDirector[int](mockSceneA, 1, ruleSet)
+
+	ruleSet[mockSceneA] = []Directive[int]{
+		Directive[int]{Dest: mockSceneB, Trigger: 2, Transition: mockTransitionA},
+	}
+	ruleSet[mockSceneB] = []Directive[int]{
+		Directive[int]{Dest: mockSceneA, Trigger: 2, Transition: mockTransitionB},
+	}
+	director.ProcessTrigger(2)
+
+	// Assert transition is running
+	assert.Equal(t, mockTransitionA, director.current)
+
+	director.ProcessTrigger(2)
+	assert.Equal(t, mockTransitionB, director.current)
+
+	mockTransitionB.End()
+	assert.Equal(t, mockSceneA, director.current)
+}
