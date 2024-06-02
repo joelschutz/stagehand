@@ -2,6 +2,7 @@
 
 ![Codecov](https://img.shields.io/codecov/c/gh/joelschutz/stagehand?token=3BD1FTRKUC)
 [![issues](https://img.shields.io/github/issues/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/issues)
+![GitHub Release](https://img.shields.io/github/v/release/joelschutz/stagehand)
 [![license](https://img.shields.io/github/license/joelschutz/stagehand)](https://github.com/joelschutz/stagehand/blob/main/LICENSE)
 
 Stagehand is a scene manager library for [Ebitengine](https://ebitengine.org) that makes it easy to manage game scenes and state. With Stagehand, you can quickly create and transition between scenes, allowing you to focus on the content and gameplay of your game.
