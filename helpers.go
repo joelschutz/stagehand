@@ -32,7 +32,7 @@ func MaxInt(a, b int) int {
 	return b
 }
 
-// Pre-draw scenes
+// Pre-draw returns the rendered frames for the given scenes.
 func PreDraw[T any](bounds image.Rectangle, fromScene, toScene Scene[T]) (*ebiten.Image, *ebiten.Image) {
 	fromImg := ebiten.NewImage(bounds.Dx(), bounds.Dy())
 	fromScene.Draw(fromImg)

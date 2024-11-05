@@ -12,6 +12,7 @@ type SceneTransition[T any] interface {
 	End()
 }
 
+// A helper class that implements basic transition functionality
 type BaseTransition[T any] struct {
 	fromScene Scene[T]
 	toScene   Scene[T]
@@ -24,7 +25,7 @@ func (t *BaseTransition[T]) Start(fromScene, toScene Scene[T], sm SceneControlle
 	t.sm = sm
 }
 
-// Update updates the transition state
+// Updates the transition state
 func (t *BaseTransition[T]) Update() error {
 	// Update the scenes
 	err := t.fromScene.Update()
@@ -40,7 +41,7 @@ func (t *BaseTransition[T]) Update() error {
 	return nil
 }
 
-// Layout updates the layout of the scenes
+// Layout updates the layout of the scenes and return the larger one
 func (t *BaseTransition[T]) Layout(outsideWidth, outsideHeight int) (int, int) {
 	sw, sh := t.fromScene.Layout(outsideWidth, outsideHeight)
 	tw, th := t.toScene.Layout(outsideWidth, outsideHeight)
